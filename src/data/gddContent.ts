@@ -236,6 +236,94 @@ export const GDD_SECTIONS_DATA = {
     ]
   },
 
+  aiSanitySystems: {
+    title: "Spezielle Horror-Systeme: Monster-KI, Sanity-Desynchronisation & Dynamic Scares",
+    subtitle: "AIPerception (Hearing/Mic), Clientseitige Halluzinationen & Dynamic Tension Director",
+    soundAi: {
+      title: "1. Sound-basierte Monster-KI (AIPerception & Live-Mikrofon)",
+      concept: "Die Monster-KI (Der 'Stalker') reagiert auf drei Arten von Geräuschen: Physische Bewegung (Schritte, Rennen), Umwelt-Interaktionen (Türen, Barrikaden, geworfene Flaschen) und die ECHTE Mikrofon-Lautstärke der Spieler (Proximity Voice).",
+      mechanisms: [
+        "AIPerception Hearing Sense: Registriert Geräusche via UAISense_Hearing::ReportNoiseEvent mit individueller Lautstärke (Loudness 0.1–2.5) und Reichweite.",
+        "Live-Mikrofon-Tracking: Der Audiopuffer des Spieler-Headsets wird in Echtzeit (RMS-Pegel) analysiert. Wenn ein Spieler im echten Leben ins Headset schreit oder panisch flüstert, sendet die Engine einen Noise-Event an die KI!",
+        "Behavior Tree Phasen: Idle Patrol ➔ Suspicious (Untersucht Geräusch-Quelle mit EQS) ➔ Stalking (Flankiert aus dem Schatten) ➔ Bloodlust Rush (Direkter Angriff bei Sichtkontakt)."
+      ],
+      aiCodeSnippet: `// Source/KrasnyBor/AI/KB_MonsterAIController.cpp
+void AKB_MonsterAIController::OnPerceptionUpdated(const TArray<AActor*>& UpdatedActors)
+{
+    for (AActor* Actor : UpdatedActors)
+    {
+        FActorPerceptionBlueprintInfo Info;
+        GetAIPerceptionComponent()->GetActorsPerception(Actor, Info);
+
+        for (const FAIStimulus& Stimulus : Info.LastSensedStimuli)
+        {
+            if (Stimulus.Type == UAISense::GetSenseID<UAISense_Hearing>())
+            {
+                // Set Sound Location in Blackboard for Behavior Tree Investigation
+                GetBlackboardComponent()->SetValueAsVector("LastNoiseLocation", Stimulus.StimulusLocation);
+                GetBlackboardComponent()->SetValueAsFloat("NoiseLoudness", Stimulus.Strength);
+                GetBlackboardComponent()->SetValueAsEnum("AIState", (uint8)EMonsterState::InvestigatingNoise);
+            }
+        }
+    }
+}`
+    },
+    sanitySystem: {
+      title: "2. Asymmetrisches Sanity-System (Client-Side Phantoms)",
+      concept: "Sanity sinkt serverseitig autoritativ (GAS Attribute), aber Halluzinationen werden AUSSCHLIESSLICH lokal auf dem betroffenen Client gespawnt (Actor bReplicates = false). Andere Spieler sehen eine leere Wand oder einen leeren Raum.",
+      mechanisms: [
+        "Phantom-Spawns (Lokale Actors): Bei Sanity < 35% spawnt der lokale Sanity-Manager 'Phantom-Stalker', die auf den Spieler zurennen und sich bei 1 Meter Abstand mit einem Krähenschrei in schwarzen Rauch auflösen.",
+        "Gefälschte Umwelt-Zustände: Türen wirken clientseitig mit Brettern vernagelt; Wände bluten; Gegenstände im Rucksack verwandeln sich visuell in faules Fleisch.",
+        "Phantom-Audios (MetaSounds HRTF): Tritte direkt hinter den Ohren des Spielers, falsche Schüsse in der Ferne oder gefälschte Hilferufe toter Kameraden."
+      ],
+      sanityCodeSnippet: `// Source/KrasnyBor/Psych/KB_SanityManagerComponent.cpp
+void UKB_SanityManagerComponent::EvaluateLocalSanity(float CurrentSanity)
+{
+    // ONLY executed on Locally Controlled Autonomous Client!
+    if (!GetOwner()->IsLocallyControlled()) return;
+
+    if (CurrentSanity < 30.0f && !bIsExperiencingSeverePsychosis)
+    {
+        bIsExperiencingSeverePsychosis = true;
+        
+        // Spawn Local-Only Phantom Actor (bReplicates = false)
+        FActorSpawnParameters SpawnParams;
+        SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+        
+        const FVector SpawnLoc = CalculatePeripheralSpawnLocation();
+        APhantomMonsterActor* Phantom = GetWorld()->SpawnActor<APhantomMonsterActor>(PhantomClass, SpawnLoc, FRotator::ZeroRotator, SpawnParams);
+        
+        // Play local auditory whispers
+        PlayBinauralWhispers(CurrentSanity);
+    }
+}`
+    },
+    dynamicScareDirector: {
+      title: "3. Dynamic Jump-Scare & Tension Director (Open World)",
+      concept: "Keine statischen Scripted Triggers! Ein Director-Subsystem überwacht kontinuierlich den 'Angst- & Ruhe-Zyklus' jedes Spielers und platziert Ereignisse unvorhersehbar im toten Winkel.",
+      mechanisms: [
+        "Tension Curve & Scare-Tokens: Nach einem Schreckmoment erhält der Spieler einen 'Tension Cooldown' (60–90 Sekunden Ruhephase), um Abstumpfung zu verhindern.",
+        "Peripheral Vision & Darkness Queries (EQS): Das System sucht Punkte knapp außerhalb des Kamerasichtfelds (Dot Product < 0.3) in Zonen mit geringer Lumen-Beleuchtung (< 1.0 Lux).",
+        "Dynamische Ereignisse: Auffliegende Krähenschwärme aus Autowracks, plötzlich umfallende Regale bei Chaos Destruction, zuckende Schattenfiguren an Wegbiegungen, die verschwinden sobald die Taschenlampe sie trifft."
+      ],
+      directorCodeSnippet: `// Source/KrasnyBor/Subsystems/KB_ScareDirectorSubsystem.cpp
+void UKB_ScareDirectorSubsystem::TryTriggerDynamicScare(AKB_Character* TargetPlayer)
+{
+    if (GetTensionState(TargetPlayer) != ETensionState::RipeForScare) return;
+
+    // Use Environment Query System (EQS) to find unlit spot behind player
+    FEQSParam QueryParam;
+    QueryParam.Viewer = TargetPlayer;
+    QueryParam.MaxDistance = 800.0f;
+    
+    ExecuteScareEQS(QueryParam, [this, TargetPlayer](const FVector& ScareLocation) {
+        SpawnDynamicScareEvent(ScareLocation, EScareType::FleeingShadowFigure);
+        ResetTensionTimer(TargetPlayer, 75.0f); // 75s Cooldown
+    });
+}`
+    }
+  },
+
   ue5Architecture: {
     title: "5. Technische Unreal Engine 5 Architektur, DevOps & Networking",
     subtitle: "Git LFS, Server-Struktur, Replikations-Matrix, Proximity Voice & C++ Flashlight",
@@ -524,5 +612,97 @@ bEnableLumenGI=True
 bEnableSubstrate=True`
       }
     ]
+  },
+
+  levelReleasePipeline: {
+    title: "6. Level Design, Soundscapes & GitHub Release Deployment",
+    subtitle: "World Partition 16km², MetaSounds Biome-Volumes, Windows Shipping .exe & GitHub Releases",
+    worldPartition: {
+      title: "1. World Partition & 60+ FPS Performance-Architektur",
+      summary: "Nahtloses 16 km² Open-World Streaming ohne Ladebalken via Nanite & HLODs auf Windows PC.",
+      parameters: [
+        "Grid Cell Size: 12800 Units (128m x 128m) – Optimaler Sweet-Spot für Wald- & Bunker-Streaming.",
+        "Loading Range: 25600 Units (256m Radius um jeden PC-Spieler) – Verhindert Pop-in von Bäumen und Gebäuden.",
+        "Hierarchical LOD (HLOD) Nanite Clusters: Weit entfernte Landmarken (Monolith, Sendemast, Bunkerschornsteine) werden zu extrem leichten Nanite-Proxys zusammengefasst (0 FPS Draw-Call-Overhead).",
+        "Data Layers (Runtime): Trennt die Oberwelt von unterirdischen Katakomben & Bunker-Ebenen. Unterirdische Räume werden erst geladen, wenn der Spieler die Luftschleuse betritt.",
+        "Spatially Loaded Rules: Lichtquellen und Umweltelemente sind Spatially Loaded; GameMode, Wetter-Subsystem und Monster-Spawn-Manager sind Non-Spatially Loaded (Global aktiv)."
+      ],
+      iniConfig: `// Config/DefaultEngine.ini
+[/Script/Engine.WorldPartition]
+bEnableWorldPartition=True
+DefaultGridCellSize=12800
+DefaultLoadingRange=25600
+bEnableHLODInEditor=True
+bAlwaysLoadedActorsAllowed=True`
+    },
+    soundscapes: {
+      title: "2. Soundscape-Architektur & Audio Volumes",
+      summary: "Atmosphärische Biome mit dynamischem Wind, Knacken im Unterholz und MetaSounds Submix Blends.",
+      biomes: [
+        {
+          name: "Tiefschwarzer Nadelwald (Forest Biome)",
+          reverb: "Outdoor Forest Dampening (Kein harter Hall, weite Dämpfung)",
+          sounds: "Stetiges Rauschen im Kronendach, plötzliche Windböen, knarrende Fichtenstämme, trockenes Knacken im Unterholz bei schnellen Spielerbewegungen.",
+          fearFactor: "Akustische Täuschung: Der Wind moduliert gelegentlich Frequenzen, die wie fernes Flüstern klingen."
+        },
+        {
+          name: "Verlassener Militärbunker (Subterranean Biome)",
+          reverb: "Convolution Reverb: Feuchte Betonhalle (2.8s Decay, metallischer Nachhall)",
+          sounds: "Tiefes 50Hz-Brummen sterbender Transformatoren, rhythmisches Wassertropfen in Pfützen, Dehnungsgeräusche korrodierter Lüftungsschächte.",
+          fearFactor: "Jeder Schritt hallt wider; Monster hören rennende Spieler durch die Schächte über 100m weit."
+        },
+        {
+          name: "Toxischer Faulschlamm-Sumpf (Swamp Biome)",
+          reverb: "Muted Bog (Gedämpfte Hochtöne, basslastiges Gluckern)",
+          sounds: "Blubbernde Methangas-Blasen, schmatzende Schlammgeräusche beim Gehen, bedrückende Totenstille unterbrochen von panischem Insektenschwirren.",
+          fearFactor: "Geigerzähler-Knistern schlägt plötzlich an; Schritte erzeugen nasse RVT-Spuren."
+        }
+      ]
+    },
+    packagingGuide: {
+      title: "3. Windows PC Packaging (.exe Shipping Build)",
+      summary: "Schritt-für-Schritt Erstellung der fertigen, standalone ausführbaren Windows 64-Bit .exe.",
+      steps: [
+        {
+          step: "1. Project Settings konfigurieren",
+          desc: "Öffne 'Edit ➔ Project Settings ➔ Packaging':\n- Build Configuration: 'Shipping'\n- For Distribution: 'True' (Entfernt Debug-Overhead & schrumpft Dateigröße)\n- Include Prerequisites: 'True' (Packt DirectX & VC++ Redistributables automatisch bei)\n- Use IoStore (Container-Dateien .ucas/.utoc): 'True' (Schnellste Ladezeiten)"
+        },
+        {
+          step: "2. Maps for Cooking festlegen",
+          desc: "Unter 'Project Settings ➔ Project ➔ Maps & Modes ➔ Advanced ➔ List of maps to include in a packaged build':\n- Maps/Entry_MainMenu.umap\n- Maps/OpenWorld_KrasnyBor.umap"
+        },
+        {
+          step: "3. Packaging via Editor oder CLI ausführen",
+          desc: "Editor: 'Platforms ➔ Windows ➔ Package Project' ➔ Zielordner wählen (z.B. C:/Builds/KrasnyBor_Win64).\nCLI Automatisierung via RunUAT (für fehlerfreie CI/CD Builds):"
+        }
+      ],
+      runUatCommand: `.\\Engine\\Build\\BatchFiles\\RunUAT.bat BuildCookRun ^
+  -project="C:/Projects/KrasnyBor/KrasnyBor.uproject" ^
+  -noP4 -clientconfig=Shipping -platform=Win64 -targetplatform=Win64 ^
+  -build -cook -pak -stage -archive ^
+  -archivedirectory="C:/Projects/KrasnyBor/Builds/Win64"`
+    },
+    githubReleaseGuide: {
+      title: "4. GitHub Release Deployment & Play with Friends",
+      summary: "Vom lokalen Build-Ordner zum fertigen GitHub-Download-Link für Freunde.",
+      steps: [
+        {
+          step: "1. Build-Ordner komprimieren",
+          desc: "Navigiere zu 'Builds/Win64/Windows'. Der Ordner enthält 'KrasnyBor.exe', den Ordner 'KrasnyBor/' und 'Engine/'. Komprimiere diesen Ordner als ZIP: 'ProjectKrasnyBor_v0.1.0_Win64.zip'."
+        },
+        {
+          step: "2. GitHub Release erstellen (Web oder gh CLI)",
+          desc: "Auf GitHub im Repository auf 'Releases ➔ Draft a new release' klicken.\n- Tag version: 'v0.1.0-alpha'\n- Release Title: 'Project: Krasny Bor - v0.1.0 Alpha (Playable Build)'\n- Ziehe die 'ProjectKrasnyBor_v0.1.0_Win64.zip' per Drag & Drop in das Release-Feld (GitHub Releases unterstützt Dateien bis 2 GB pro Asset!)."
+        },
+        {
+          step: "3. CLI Shortcut (GitHub CLI):",
+          desc: "gh release create v0.1.0-alpha ./Builds/ProjectKrasnyBor_v0.1.0_Win64.zip --title 'Project Krasny Bor v0.1.0' --notes '1-4 Player PC Coop Horror Standalone Build.'"
+        },
+        {
+          step: "4. Freunde einladen & Zusammen spielen:",
+          desc: "1. Freunde laden die ZIP von deinem GitHub-Link herunter und entpacken sie.\n2. Starten 'KrasnyBor.exe'.\n3. Spieler 1 klickt auf 'Lobby Hosten' (erzeugt automatische Session-ID via EOS).\n4. Spieler 2–4 klicken auf 'Beitreten' oder fügen den Host als Freund hinzu.\n5. Spiel startet direkt mit räumlichem Proximity-Voice-Chat!"
+        }
+      ]
+    }
   }
 };

@@ -1,5 +1,5 @@
 import React from 'react';
-import { ShieldAlert, Terminal, Volume2, VolumeX, Download, BookOpen, Layers, Cpu, EyeOff, Radio, Camera } from 'lucide-react';
+import { ShieldAlert, Terminal, Volume2, VolumeX, Download, BookOpen, Layers, Cpu, EyeOff, Radio, Camera, Brain } from 'lucide-react';
 import { GddSectionId } from '../types/gdd';
 
 interface GddHeaderProps {
@@ -23,8 +23,10 @@ export const GddHeader: React.FC<GddHeaderProps> = ({
     { id: 'multiplayer_horror', label: '2. Coop', icon: <EyeOff className="w-4 h-4" /> },
     { id: 'world_progression', label: '3. World', icon: <Radio className="w-4 h-4" /> },
     { id: 'diegetic_ui', label: '4. Diegetik', icon: <BookOpen className="w-4 h-4" /> },
+    { id: 'ai_sanity_systems', label: 'KI & Sanity', icon: <Brain className="w-4 h-4 text-purple-400" /> },
     { id: 'art_styleguide', label: 'Art Styleguide', icon: <Camera className="w-4 h-4 text-amber-400" /> },
     { id: 'ue5_tech_stack', label: 'UE5 Tech', icon: <Cpu className="w-4 h-4" /> },
+    { id: 'level_release_pipeline', label: 'Release & Build', icon: <Download className="w-4 h-4 text-emerald-400" /> },
     { id: 'interactive_sandbox', label: 'Lab', icon: <ShieldAlert className="w-4 h-4 text-red-400" /> },
   ];
 

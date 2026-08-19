@@ -9,7 +9,9 @@ export type GddSectionId =
   | 'world_progression'
   | 'diegetic_ui'
   | 'art_styleguide'
+  | 'ai_sanity_systems'
   | 'ue5_tech_stack'
+  | 'level_release_pipeline'
   | 'interactive_sandbox'
   | 'export';
 

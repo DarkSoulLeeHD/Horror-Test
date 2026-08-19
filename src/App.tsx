@@ -6,6 +6,8 @@ import { MultiplayerHorrorSection } from './components/MultiplayerHorrorSection'
 import { WorldProgressionSection } from './components/WorldProgressionSection';
 import { DiegeticUiSection } from './components/DiegeticUiSection';
 import { ArtStyleguideSection } from './components/ArtStyleguideSection';
+import { AiSanitySection } from './components/AiSanitySection';
+import { LevelReleaseSection } from './components/LevelReleaseSection';
 import { Ue5TechArchitectureSection } from './components/Ue5TechArchitectureSection';
 import { InteractiveSandbox } from './components/InteractiveSandbox';
 import { ExportGddModal } from './components/ExportGddModal';
@@ -65,12 +67,20 @@ export default function App() {
           <DiegeticUiSection audioEnabled={audioEnabled} />
         )}
 
+        {activeSection === 'ai_sanity_systems' && (
+          <AiSanitySection audioEnabled={audioEnabled} />
+        )}
+
         {activeSection === 'art_styleguide' && (
           <ArtStyleguideSection audioEnabled={audioEnabled} />
         )}
 
         {activeSection === 'ue5_tech_stack' && (
           <Ue5TechArchitectureSection />
+        )}
+
+        {activeSection === 'level_release_pipeline' && (
+          <LevelReleaseSection audioEnabled={audioEnabled} />
         )}
 
         {activeSection === 'interactive_sandbox' && (

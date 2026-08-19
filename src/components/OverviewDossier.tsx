@@ -1,6 +1,6 @@
 import React from 'react';
 import { GDD_METADATA } from '../data/gddContent';
-import { FileText, ShieldAlert, Cpu, Users, EyeOff, Radio, BookOpen, Layers, Terminal } from 'lucide-react';
+import { FileText, ShieldAlert, Cpu, Users, EyeOff, Radio, BookOpen, Layers, Terminal, Brain } from 'lucide-react';
 import { GddSectionId } from '../types/gdd';
 
 interface OverviewDossierProps {
@@ -38,6 +38,13 @@ export const OverviewDossier: React.FC<OverviewDossierProps> = ({ onNavigate }) 
       accent: 'border-emerald-900/60'
     },
     {
+      id: 'ai_sanity_systems' as GddSectionId,
+      title: 'Horror-Systeme & KI',
+      desc: 'Sound-AIPerception (Live-Mic Tracking), Asymmetrische Sanity-Phantome & Dynamic Scare Director.',
+      icon: <Brain className="w-5 h-5 text-purple-500" />,
+      accent: 'border-purple-900/60'
+    },
+    {
       id: 'art_styleguide' as GddSectionId,
       title: 'Anti-Clean Art & Styleguide',
       desc: 'Lumen DX12 High-End Lighting, Volumetric Fog, Bodycam-Rauschen & Physisches Inventar [Tab].',
@@ -50,6 +57,13 @@ export const OverviewDossier: React.FC<OverviewDossierProps> = ({ onNavigate }) 
       desc: 'Gameplay Ability System, Replication Graph, Standalone Packaging & GitHub Distribution.',
       icon: <Cpu className="w-5 h-5 text-blue-500" />,
       accent: 'border-blue-900/60'
+    },
+    {
+      id: 'level_release_pipeline' as GddSectionId,
+      title: '6. Level Design & GitHub Release',
+      desc: 'World Partition 16km², MetaSounds Biome-Volumes, Windows Shipping .exe & GitHub Releases Deployment.',
+      icon: <Layers className="w-5 h-5 text-emerald-500" />,
+      accent: 'border-emerald-900/60'
     },
     {
       id: 'interactive_sandbox' as GddSectionId,
