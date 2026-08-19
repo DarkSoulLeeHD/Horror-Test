@@ -1,0 +1,6 @@
+{
+  "name": "Project PHANTASM - UE5 AAA Multiplayer Horror GDD & Technical Blueprint",
+  "description": "Technisches Game Design Document und interaktiver System-Explorer für ein 3D Open-World Multiplayer-Horrorspiel in Unreal Engine 5.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

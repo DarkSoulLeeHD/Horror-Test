@@ -1,0 +1,70 @@
+@import "tailwindcss";
+
+@layer base {
+  body {
+    background-color: #07090b;
+    color: #c2c9d1;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    overflow-x: hidden;
+  }
+}
+
+/* CRT and Diegetic Terminal Effects */
+.scanline-overlay {
+  background: linear-gradient(
+    rgba(18, 16, 16, 0) 50%, 
+    rgba(0, 0, 0, 0.4) 50%
+  ), linear-gradient(
+    90deg,
+    rgba(255, 0, 0, 0.03),
+    rgba(0, 255, 0, 0.01),
+    rgba(0, 0, 255, 0.03)
+  );
+  background-size: 100% 3px, 6px 100%;
+  pointer-events: none;
+}
+
+.vignette-radial {
+  background: radial-gradient(circle at center, transparent 40%, rgba(3, 4, 6, 0.85) 90%, #030406 100%);
+  pointer-events: none;
+}
+
+.grunge-border {
+  border: 1px solid rgba(82, 45, 35, 0.45);
+  box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.9), 0 4px 20px rgba(0, 0, 0, 0.8);
+}
+
+.horror-glow {
+  text-shadow: 0 0 8px rgba(185, 28, 28, 0.6), 0 0 20px rgba(153, 27, 27, 0.4);
+}
+
+.amber-glow {
+  text-shadow: 0 0 8px rgba(217, 119, 6, 0.7), 0 0 18px rgba(180, 83, 9, 0.3);
+}
+
+.crt-flicker {
+  animation: flicker 0.15s infinite;
+}
+
+@keyframes flicker {
+  0% { opacity: 0.97; }
+  50% { opacity: 1; }
+  100% { opacity: 0.98; }
+}
+
+/* Custom Gritty Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #090c0f;
+  border-left: 1px solid #1c222b;
+}
+::-webkit-scrollbar-thumb {
+  background: #3b2a26;
+  border: 1px solid #5a3830;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #783525;
+}
